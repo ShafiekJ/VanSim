@@ -1,0 +1,9 @@
+.buttonHolder{
+    display:flex;
+    flex-wrap: wrap;
+    margin:auto;
+    max-width: 50%;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
