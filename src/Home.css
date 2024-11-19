@@ -1,0 +1,73 @@
+
+#home-container{
+    display:flex;
+    flex-direction: row;
+    height: 100%;
+    aspect-ratio: 16/ 9;
+    justify-content: space-between;
+    
+}
+
+#leftside{
+    display:flex;
+    width: 75%;
+    flex-direction: column-reverse;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10%;
+}
+#bannerHolder{
+    display:flex;
+    width: 75%;
+    flex-direction: column;
+ 
+    align-items: center;
+    
+}
+#overdress-banner{
+    margin-top: 5%;
+height: 70%;
+ 
+}
+#banner{
+    display:flex;
+    align-self: top;
+    height:30%;
+    width: 100%;
+    justify-content: center;
+}
+.homeButton{
+    width: 20%;
+    margin: 1%;
+    margin-left: 20%;
+}
+.faceCard{
+    height: 20vh;
+}
+#rightside{
+    display:flex;
+ 
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+ width: 25%;
+        
+}
+
+.horizontal-ad{
+    max-width: 30vw;
+    max-height: 25vh;
+}
+.adsbygoogle{
+
+    position:absolute;
+    z-index: 5;
+}
+#ad1{
+    top:40vh;
+    max-width:10vw;
+
+}
+#ad1 > * {
+    width:inherit;
+  }

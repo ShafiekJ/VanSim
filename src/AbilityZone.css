@@ -1,0 +1,18 @@
+#abilityZone{
+ 
+        display: flex;
+ 
+        overflow-x: scroll;
+        overflow-y: hidden;
+     
+ 
+}
+#abilityZone .card{
+        margin-left:0.1rem;
+        font-size:x-small;
+}
+
+#abilityZone .card img {
+  
+}
+ 

@@ -1,0 +1,235 @@
+#container{
+  display:flex;
+}
+#deckStuff{
+  width: 35vw;
+}
+#collectionStuff{
+  width: 35vw;
+}
+#topBar{
+  display: flex;
+  justify-content: end;
+  
+  height: 20vh;
+  width: 100vw;
+}
+#collection{
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  overflow-y: scroll;
+  height:80vh;
+  border:solid whitesmoke ;
+  width: 35vw;
+   margin:0;
+ 
+}
+#collection img{
+  height:100%;
+}
+
+#deck{
+   display: flex;
+   flex-direction: row;
+   flex-wrap: wrap;
+   align-content: flex-start;
+ 
+   overflow-y: scroll;
+   height:80vh;
+    border:solid whitesmoke ;
+    width: 35vw;
+    margin:0;
+    margin-left: 2%;
+ }
+ #rideDeck{
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  width: 5rem;
+  height: 7.5rem;
+ }
+ #mainDeck{
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+ 
+  width:100%;
+ }
+
+ .cards{
+  display :flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width:100%;
+  height: 15%;
+  min-height: 7.5rem;
+ 
+ }
+  .deckCard{
+ 
+    height: 25%;
+   padding: 0 0.1rem 0 0.1rem;
+   margin:0;
+   width: 5rem;
+   height: 7.5rem;
+ }
+ .deckCard img{
+ 
+  width: 5rem;
+  height: 7.5rem;
+}
+.deckSection{
+  display: flex;
+  
+}
+
+ .collectionCard{
+ 
+ 
+  width: 5rem;
+  height: 7.5rem;
+    padding: 0 0.1rem 0 0.1rem;
+    margin:0;
+ }
+ .deckCon{
+    width:100%;
+    display:flex;
+    flex-direction: column;
+ 
+ }
+.cardInfo{
+  display:flex;
+ flex-direction: row;
+}
+.topBar{
+  margin: 0.7rem 0 0.7rem 0;
+  height: 10%;
+  width:100%;
+  display:flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-content: flex-start;
+}
+
+ /* #cardViewer{
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   width:30vw;
+   height:600px;
+   padding: 0px 2% 0 0;
+  margin-right: 5px;
+   object-fit: cover;
+ } */
+ /* #builderCardImg{
+   display: flex;
+ 
+
+   justify-content: center;
+   margin-left: 10%;
+   border: 0.5rem, darkblue solid;
+   object-fit: cover;
+   
+ } */
+ /* .cardText{
+ 
+  object-fit: cover; 
+    
+  overflow-y: scroll;
+  height:100px;
+} */
+
+.confirm{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+ position: absolute;
+  z-index: 10;
+  background-color: black;
+  width: 30vw;
+  height:30vh;
+}
+
+/* DeckManager*/
+#deckManagerHolder{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem;
+}
+#deckHolder{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  justify-self: center;
+  width:80vw;
+  border:0.25rem black dashed;
+  flex-wrap: wrap;
+}
+#decks{
+  display: flex;
+  
+}
+.deck{
+  display: flex;
+  flex-direction: column;
+  margin: 1rem;
+}
+
+#deckManagerButtons{
+  margin: 1rem;
+  position:sticky;
+  bottom: 5%;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+ 
+}
+
+#sleeveContainer{
+  display: flex;
+  overflow: hidden;
+  width:60vw;
+}
+.sleeve{
+  width: 4.75rem;
+  border: 0.3rem solid transparent ;
+}
+.accessories{
+  display: flex;
+  flex-direction: column;
+  margin-top: 5vh;
+ 
+  justify-content: center;
+  align-items: center;
+}
+.sleeves{
+  display: flex;
+
+  justify-content: center;
+  flex-direction: column;
+}
+.playmat{
+ 
+    width: 20%;
+    border: 0.3rem solid transparent ;
+    border-radius: 0.5rem;
+ 
+}
+#playmats{
+  display: flex;
+  flex-direction: row;
+  width:60%;
+  justify-content: center;
+  border: 0.5rem solid transparent ;
+  overflow-x: scroll;
+}
+.selectedPlaymat{
+  border: 0.3rem solid rgb(17, 147, 212) ;
+  border-radius: 0.5rem;
+}
