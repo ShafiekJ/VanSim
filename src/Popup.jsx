@@ -19,24 +19,24 @@ if(props.type === 'stand'  && !props.pause){
 
     })}>
  
-      <button onClick={(()=>{//import ride function
+      <button onClick={(async ()=>{//import ride function
       props.setPopup(false)
-      props.rideFromHand()
+    await  props.rideFromHand()
  
-      document.getElementById('wait').click()
+  
 
 
       })}>Ride from Hand </button>
-      <button onClick={(async()=>{
- 
+{props.format === 'Standard' ?     <button onClick={(async()=>{ 
 // props.setPopup(false)
-          props.rideFromRideDeck()
+props.setPopup(false)
+       await   props.rideFromRideDeck()
       
-        document.getElementById('wait').click()
+  
    
         // props.setPhase('main')
         //call ridedeck ride
-      })}>Ride from RideDeck </button>
+      })}>Ride from RideDeck </button> : <></>}
       <button onClick={(()=>{
         //setSubphase stride
 
@@ -242,7 +242,7 @@ else if(props.type === 'choose'){
       {props.currentAbility.text}
  <div> 
  {choices.map((item , i)=>
-<button onClick={(()=>{ props.setPopup(false);props.costPaid.current = item ;document.getElementById('wait').click(); })} >{item.text}</button>
+<button key = {i}  onClick={(()=>{ props.setPopup(false);props.costPaid.current = item ;document.getElementById('wait').click(); })} >{item.text}</button>
 
 )}
  

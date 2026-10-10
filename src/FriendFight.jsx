@@ -1,13 +1,21 @@
-import  React , {useState , useEffect} from 'react'
+import  React , {useState , useEffect, useContext} from 'react'
 import axios from 'axios'
 import Field from './Field'
+import { socket } from './socket'
+import { dataContext } from './App'
+import LinkButton from './LinkButton'
+
 
 let lobbyNum = 0
-export default function FriendFight({  socket, activeDeck, user, setCurrentPage, backendUrl }) {
+
+export default function FriendFight( ) {
+
+    const props = useContext(dataContext)
+    let activeDeck = props.activeDeck
     const [waiting , setWaiting] = useState(false)
     const [roomID , setRoomID] = useState('')
     const [inLobby , setInLobby] = useState(false)
- 
+
     const [readyCount , setReadyCount] = useState(0)
     const [opponentData, setOpponentData] = useState(null)
     const [ready, setReady] = useState(false)
@@ -61,14 +69,14 @@ useEffect(()=>{
                 if(!waiting){
                     setWaiting(true)
                     socket.emit('message' , 'ass')
-                    await axios.post( backendUrl+'friendfight/host' , {  socketId : socket.id}).then(async (response)=>{
+                    await axios.post( props.backendUrl+'friendfight/host' , {  socketId : socket.id}).then(async (response)=>{
                         setWaiting(false);
                         console.log(response.data)
                         let roomId = response.data.roomId
                         setRoomID(roomId)
                         lobbyNum = 1
-                        socket.emit('join_room' , {roomId : roomId , host:true , userData:{displayname:user.displayname, 
-                            Sleeves:props.activeDeck.Sleeves, Playmat:props.activeDeck.Playmat, 
+                        socket.emit('join_room' , {roomId : roomId , host:true , userData:{displayname:props.user.displayname, 
+                            Sleeves: activeDeck.Sleeves, Playmat: activeDeck.Playmat, 
                             FaceCard:activeDeck.FaceCard ,FirstVanguard : activeDeck.FirstVanguard ,socketid:socket.id}})
                         //detect when someone joins the room from here
                         //set timeout when userjoins timeout exits and normal matchmakingt hing
@@ -90,7 +98,7 @@ useEffect(()=>{
                 })}
                
                 />
-                 {console.log(roomID)}
+
             <button onClick={(async ()=>{
                 //post input to server
                 
@@ -100,8 +108,8 @@ useEffect(()=>{
                         setWaiting(false);
                 //if room is not full join 
 
-                        socket.emit('join_room' , {roomId : roomID,host:false, userData:{displayname:user.displayname, 
-                            Sleeves:props.activeDeck.Sleeves, Playmat:props.activeDeck.Playmat, 
+                        socket.emit('join_room' , {roomId : roomID,host:false, userData:{displayname:props.user.displayname, 
+                            Sleeves: activeDeck.Sleeves, Playmat: activeDeck.Playmat, 
                             FaceCard:activeDeck.FaceCard, FirstVanguard : activeDeck.FirstVanguard ,socketid:socket.id}})
 
                         lobbyNum = 2
@@ -117,30 +125,32 @@ useEffect(()=>{
                 Join
             </button>
     
-                <button onClick={(()=>{//leave room, emit leaveroom
-                   setCurrentPage('home')
+                <LinkButton text='Back' to='/home' onClick={(()=>{//leave room, emit leaveroom
+                    
                 })} >
-                    Back
-                </button>
+           
+                </LinkButton>
         </div>
       ) 
       else{
         return (
             <div>
       {  ready?
-       <Field  user ={user} activeDeck = {activeDeck} opponentData= {opponentData}  roomID ={roomID} socket ={socket}
-       setCurrentPage={setCurrentPage} 
+       <Field  user ={props.user} activeDeck = {props.activeDeck} opponentData= {opponentData}  roomID ={roomID} socket ={socket} setFormat ={props.setFormat} format ={props.format}
+       setCurrentPage={props.setCurrentPage}   backendUrl= {props.backendUrl }
       /> 
       
       : 
          <div>
       <div >
   {/* userData */}
-      {user.displayname}
+      {props.user.displayname}
      <img className={'faceCard'} src =  {activeDeck.FaceCard} /> 
       </div>
 
-      <div>Lobby Code : {roomID}</div>
+      <div>Lobby Code : {roomID}</div> <button onClick={(()=>{
+          navigator.clipboard.writeText(roomID);
+      })} > Copy Code</button>
  
       <button onClick={(()=>{
           //emit leave lobby signal

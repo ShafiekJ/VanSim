@@ -3,26 +3,33 @@ constructor(
     position,
     unit,
     powergain,
-    shieldgain
+    shieldgain,
+    order
 ){
     this.position = position
     this.unit = unit
     this.powergain = powergain
     this.shieldgain = shieldgain
+    this.markers = []
+    this.order = order
 }
 
 }
 export class VGCircle{
+    position = 'VC'
+    order = 0
     constructor(
         unit,
         powergain
     ){
         this.unit = unit
         this.powergain = powergain
+        this.markers = []
     }
     
 }
 export class GCircle{
+    position = 'GC'
     constructor(
         guardians
     ){

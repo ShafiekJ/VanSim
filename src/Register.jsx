@@ -1,11 +1,15 @@
-import React , {useState, useEffect} from 'react'
+import React , {useState, useEffect, useContext} from 'react'
 import axios from 'axios';
 import { io } from 'socket.io-client'
-export default function Register(props) {
+import { socket } from './socket';
+import { dataContext } from './App';
+export default function Register( ) {
+  const props = useContext(dataContext)
     const [username , setUsername] = useState('');
     const [displayname , setDisplayname] = useState('');
     const [password , setPassword] = useState('');
     const [waitingForServer , setWaitingForServer] = useState(false)
+
     useEffect(()=>{
 
       document.getElementById("registerMain").addEventListener("keypress", function(event) {
@@ -36,8 +40,8 @@ export default function Register(props) {
   
             setWaitingForServer(true)
             await  axios.post(props.backendUrl +'register' , {username : username , password:password , displayname: displayname, profilepic:''})
-            .then(async (res)=>{console.log(res)
-              props.setSocket(await io.connect(props.backendUrl))
+            .then(async (res)=>{ 
+              socket.connect()
               props.setLoggedIn(res.data.user); 
               let tempUser = {displayname: displayname, username:username
                // profilepic: res.data.userData.profilepic

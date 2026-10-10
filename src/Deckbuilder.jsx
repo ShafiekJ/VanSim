@@ -1,17 +1,18 @@
-import React , {useState ,  useEffect , useContext , useRef} from 'react'
- import cards from '../../Backend/tempCards.js'
+import React , {useState ,  useEffect , useRef,useContext} from 'react'
+ import cards from '../../Backend/cards.json'
+ import gCards from '../../Backend/gCards.json'
+ import vCards from '../../Backend/vCards.json'
  import './Deckbuilder.css'
-
+import { dataContext } from './App'
  import banlist from '../../Backend/banlist.json'
  import sleeves from '../../Backend/Sleeves.json'
  import playmats from '../../Backend/Playmats.json'
  import Confirm from './Confirm'
-
+ import CustomImage from './CustomImage'
 import Message from './Message'
 
-var faceCard = ''
 
-var firstVanguard
+ 
 
 const choiceRestrict = {//for other formats change to {format:{list}}
 'Demon Stealth Dragon, Shiranui "Oboro' : ['Dragon Deity King of Resurgence, Dragveda'],
@@ -23,8 +24,20 @@ const choiceRestrict = {//for other formats change to {format:{list}}
 const contAmounts = {
   'Neatness Meteor Shower' : 16
 }
-export default function Deckbuilder(props) { 
 
+let list = cards
+export default function Deckbuilder( ) { 
+  const props = useContext(dataContext)
+
+  if(props.format === 'Premium'){
+    list = [...vCards, ...gCards , ...cards ]
+  }
+  else if(props.format === 'V Premium'){
+    list = vCards
+  }
+  else if(props.format === 'Standard'){
+    list = cards
+  }
 //make useref all let nonsense above
 
 let decksLength = props.decks.length
@@ -34,10 +47,13 @@ const [overwrite , setOverwrite ]= useState(false)
 const [deckName , setDeckName] = useState( "newDeck" + decksLength)//newDeck + decks.length import deckname
 const [mainDeck , setMainDeck ]= useState([])
 const [rideDeck , setRideDeck] = useState([])
+const [gDeck , setGDeck] = useState([])
 const [deckCount, setDeckCount] = useState(0)
+const [gDeckCount, setGDeckCount] = useState(0)
 const [triggerCount, setTriggerCount] = useState(0)
 const [sentinelCount , setSentinelCount] = useState(0)
-const [filter, setFilter] = useState({grade : -1, text:'' , name:''})
+const deckType = useRef('normal')
+const [filter, setFilter] = useState({grade : -1, text:'' , name:'', cardtype: ''})
 const [confirmMessage, setConfirmMessage] = useState('')
 const [sleeve, setSleeve] = useState({
   MainDeck: sleeves[0].img,
@@ -45,11 +61,14 @@ const [sleeve, setSleeve] = useState({
   GDeck:sleeves[0].img
 })
 const sleeveButton = useRef()
-const deckType = useRef('MainDeck')
+const firstVanguard = useRef(undefined)
+const faceCard = useRef('')
+const sleeveType = useRef('MainDeck')
 const [playmat, setPlaymat] = useState(playmats[0].img)
 const [showConfirm, setShowConfirm] = useState(false)
 const [message, setMessage] = useState('')
 const [counts, setCounts] = useState({})
+const [gCounts, setGCounts] = useState({})
 const [deckTriggers, setDeckTriggers] = useState({
   "Heal" : 0,
   "Critical" : 0,
@@ -71,9 +90,15 @@ grade3:false,
 
 })
 
+ 
 
-
-const nationCards = cards.filter((card)=>{return card.nation === ""|| card.nation === props.nation})
+let nationCards = list.filter((card)=>{return card.nation === ""|| card.nation.includes(props.nation)})
+if(props.format !== 'Standard'){
+  let nations = {
+    
+  }
+  nationCards =  list.filter((card)=>{return card.nation === ""|| card.clan.includes(props.clan) ||card.nation.includes(nations[props.clan]) })
+}
 const [filteredCards, setFilteredCards] = useState(nationCards)
 
 function display(text){
@@ -108,8 +133,8 @@ const deckProperties = useRef({
 
 let triggers = mainDeck.filter((card)=>{return card.cardtype.includes('Trigger Unit')})
 let orders = mainDeck.filter((card)=>{return card.cardtype.includes('Order')})
-let normalUnits = mainDeck.filter((card)=>{return card.cardtype.includes('Normal Unit') && !card.text.includes('[CONT]:Sentinel')})
-let sentinels = mainDeck.filter((card)=>{return card.text.includes('[CONT]:Sentinel')})
+let normalUnits = mainDeck.filter((card)=>{return card.cardtype.includes('Normal Unit')})
+ 
 
   let nation = props.nation
   
@@ -117,19 +142,110 @@ let sentinels = mainDeck.filter((card)=>{return card.text.includes('[CONT]:Senti
 
   const [viewCard , setViewCard ]= useState(allCards[0])
  
-const deckTypes = {
-  normalDeck:{
+ 
+async function validateDeck(deck , deckType = 'normalDeck' , format = 'Standard'){//come back
+//loop trough main and ride and g deck 
+if(faceCard.current === ''){
+  deck.FaceCard = deck.MainDeck[0].img
+}
+let deckValid = false
+ 
+if(format === 'Premium'){
+  const check = function(){
+ 
+    if(gDeck.length > 16){return false}
+ 
+    if( firstVanguard.current == undefined ){
+      return false
+    }
+ 
+    let main = [...deck.MainDeck]
+  
+    if( main.length !== 49){
+      return false
+    }
+ 
+    let triggers = 0;
+    let sentinel = 0;
+   
+  
+    
+    for(let i =0; i<main.length;i++){
+      if(main[i].cardtype.includes('Trigger Unit')){
+        triggers ++
+      }
+      if(main[i].text.includes('[CONT]:Sentinel')){
+        sentinel ++ 
+      }
+    }
 
+    if(firstVanguard.current.cardtype.includes('Trigger Unit')){
+      triggers ++
+    }
+    if(firstVanguard.current.text.includes('[CONT]:Sentinel')){
+      sentinel ++ 
+    }
+
+   
+    if(triggers !== 16 || sentinel > 4){
+      return false
+    }
+    
+    return true
   }
+  deckValid = check()
+ 
 }
 
-async function validateDeck(deck , deckType = 'normalDeck' ){//come back
-//loop trough main and ride and g deck 
-console.log('invalidate' , deck)
+else if(format === 'V Premium'){
+const check = function(){
+
+  if(gDeck.length > 0){return false}
+  if( firstVanguard.current == undefined ){
+    return false
+  }
+  let main = [...deck.MainDeck]
+
+  if( main.length !== 49){
+    return false
+  }
+
+  let triggers = 0;
+  let sentinel = 0;
  
-let deckValid = false
-const deckTypes = {
-  'normalDeck' : function(){
+
+  
+  for(let i =0; i<main.length;i++){
+    if(main[i].cardtype.includes('Trigger Unit')){
+      triggers ++
+    }
+    if(main[i].text.includes('[CONT]:Sentinel')){
+      sentinel ++ 
+    }
+  }
+
+  if(firstVanguard.current.cardtype.includes('Trigger Unit')){
+    triggers ++
+  }
+  if(firstVanguard.current.text.includes('[CONT]:Sentinel')){
+    sentinel ++ 
+  }
+
+ 
+  if(triggers !== 16 || sentinel > 4){
+    return false
+  }
+  
+  return true
+}
+deckValid = check()
+ 
+}
+
+else if(format === 'Standard'){
+  const deckTypes = {
+  'normal' : function(){
+    if(gDeck.length > 0){return false}
     let ride = deck.RideDeck
     let main = deck.MainDeck
     if(ride.length !== 4 || main.length !== 50){
@@ -142,6 +258,8 @@ const deckTypes = {
       3:true
     }
     let rideCount = 0
+    let triggers = 0;
+    let sentinel = 0;
     for(let i =0; i<ride.length;i++){
       if(!ride[i].cardtype.includes('Unit')){
         return false
@@ -150,14 +268,18 @@ const deckTypes = {
         rideDeckCards[ride[i].grade] = false
         rideCount ++
       }
-
+      if(ride[i].cardtype.includes('Trigger Unit')){
+        triggers ++
+      }
+      if(ride[i].text.includes('[CONT]:Sentinel')){
+        sentinel ++ 
+      }
       
     }
     if(rideCount !== 4){
       return false
     }
-    let triggers = 0;
-    let sentinel = 0;
+
     
     for(let i =0; i<main.length;i++){
       if(main[i].cardtype.includes('Trigger Unit')){
@@ -172,14 +294,162 @@ const deckTypes = {
     }
     return true
   },
-  'griphoDeck' : function(deck){
+  'gripho' : function(deck){
+    if(gDeck.length > 0){return false}
+    let ride = deck.RideDeck
+    let main = deck.MainDeck
+    if(ride.length !== 5 || main.length !== 50){
+      return false
+    }
+    let rideDeckCards = {
+      0:true,
+      1:true,
+      2:true,
+      3:true
+    }
+    let hasGripho = false
+    let hasOver = false
+    let calamityCount = 0
+    let rideCount = 0
+    let triggers = 0;
+    let sentinel = 0;
+    for(let i =0; i<ride.length;i++){
+      if(!ride[i].cardtype.includes('Unit')){
+        return false
+      }
+      if(rideDeckCards[ride[i].grade]){
+        rideDeckCards[ride[i].grade] = false
+        rideCount ++
+      }
+      if(ride[i].cardtype.includes('Trigger Unit')){
+
+        triggers ++
+        if(ride[i].triggereffect.includes('Over'))
+          hasOver = true
+        }
+
+      if(ride[i].text.includes('[CONT]:Sentinel')){
+        sentinel ++ 
+      }
+      
+      if(ride[i].cardtype.includes('Calamity')){
+        calamityCount ++ 
+      }
+      
+      if(ride[i].name === 'Griphosid'){
+        hasGripho = true
+      }
+      
+    }
+    if(calamityCount !== 3){
+      return false
+    }
+    if(hasOver === false){
+      return false
+    }
+    if(hasGripho === false){
+      return false
+    }
     
+    
+    for(let i =0; i<main.length;i++){
+      if(main[i].cardtype.includes('Trigger Unit')){
+        triggers ++
+      }
+      if(main[i].text.includes('[CONT]:Sentinel')){
+        sentinel ++ 
+      }
+    }
+    if(triggers !== 16 || sentinel > 4){
+      return false
+    }
+    return true
   },
-  'strideDeck' : function(deck){
+  'stride' :function(){
+    //SORT ridedck and check grade 0 name then check if other ridedeck cards are the right ones
+    let ride = deck.RideDeck.sort((card1 ,card2) => (card1.grade < card2.grade) ? -1 : (card1.grade > card2.grade) ? 1 : 0)
+    let main = deck.MainDeck
+    const decks = {
+      //grade0name : 
+      'Undying Departed, Grenache': 'Parting Shade Pirate Swordsman, Colombard Vampire Princess of Night Fog, Nightrose' ,
+      'Happiness Collector' :  'Moonlight Melody Tamer, Betty Card Dealer, Jacqueline Masked Magician, Harri',
+    }
+    if(ride.length !== 4 || main.length !== 50){
+      return false
+    }
+    let rideDeckCards = {
+      0:false,
+      1:true,
+      2:true,
+      3:true
+    }
+    let rideCount =1
+    let triggers = 0;
+    let sentinel = 0;
+    let g0 = ride[0]
+ 
+    if(!decks[g0.name]){
+      return false
+
+    }
+    let text = decks[g0.name]
+ 
+    for(let i =1; i<ride.length;i++){
+      if(!ride[i].cardtype.includes('Unit')){
+        return false
+      }
+      if(rideDeckCards[ride[i].grade]){
+        rideDeckCards[ride[i].grade] = false
+        rideCount ++
+      }
+      let name = ride[i].name
+  
+      if(!text.includes(name) && gdeck.length > 0){
+        return false
+      }
+      if(main[i].cardtype.includes('Trigger Unit')){
+        triggers ++
+      }
+      if(main[i].text.includes('[CONT]:Sentinel')){
+        sentinel ++ 
+      }
+      
+    }
+    if(rideCount !== 4){
+      return false
+    }
+    if(gDeck.length > 0){
+      let possibleG4s = {
+        'Undying Departed, Grenache': 'Ghostie Great King, Obadiah Mist Phantasm Pirate King, Nightrose' ,
+        'Happiness Collector' :  'Jester Demonic Dragon, Lunatec Dragon Dragon Masquerade, Harri',
+      }
+      for(let i = 0;i<gDeck.length;i++){
+
+        let card = gDeck[i]
+        let cardName = card.name
+        if(!possibleG4s[g0.name].includes(cardName) ){
+          return false
+        }
+      }
+    }
     
+    for(let i =0; i<main.length;i++){
+      if(main[i].cardtype.includes('Trigger Unit')){
+        triggers ++
+      }
+      if(main[i].text.includes('[CONT]:Sentinel')){
+        sentinel ++ 
+      }
+    }
+    if(triggers !== 16 || sentinel > 4){
+      return false
+    }
+    return true
   }
 }
 deckValid = deckTypes[deckType]()
+}
+
 
 return deckValid
 }
@@ -193,6 +463,9 @@ function filterCards(){
   }
   if (filter.name ){
     newCards =  newCards.filter((card)=>{return card.name.toLowerCase().includes(filter.name.toLowerCase())})
+  }
+    if (filter.cardtype ){
+    newCards =  newCards.filter((card)=>{return card.cardtype.toLowerCase().includes(filter.cardtype.toLowerCase())})
   }
 return newCards
 } 
@@ -214,7 +487,7 @@ function choiceRestrictCheck(cardName){
   return true
 }
 async function sentinelCheck(card){
-  
+  //if cardnamne is aqua sentianel max = 6 then check if only aqua in confirm
  
   if(sentinelCount < deckProperties.current.sentinelMax){
     setSentinelCount(prevSentinelCount => prevSentinelCount + 1);
@@ -230,9 +503,7 @@ async function triggerCheck(card){//fix next
     let triggerType = card.triggereffect.split(' ')[0]
  
     if(deckTriggers[triggerType] < deckProperties.current[triggerType]){
-      deckTriggers[triggerType] ++
-      setDeckTriggers({...deckTriggers})
-      setTriggerCount(prevTriggerCount => prevTriggerCount + 1); 
+ 
       return true
     }
 
@@ -278,31 +549,102 @@ async function canAdd(cardName){//fix banlist[cardname] : 0
 
 return canAdd
 }
+function canAddGDeck(card){
+ 
+if(deckType.current !== 'stride' && props.format !== 'Premium'){
+  return false
+}
+if(gDeckCount === 16){
+  return
+}
+ 
+let accessible = {
 
+}
+let cardName = card.name
+let canAdd = false
+let inDeck = gCounts[card.name]
 
+let banlistAmount = banlist[cardName]
+if(banlist[cardName]){
+  //return dobanlistcheck
+
+  if(banlistAmount < inDeck){
+    canAdd = true
+   }
+}
+else if(choiceRestrict[cardName]){
+ if(choiceRestrictCheck(cardName)){
+  canAdd = true
+} 
+}
+else if(contAmounts[cardName]){
+   if( inDeck == null ||(inDeck < contAmounts[cardName])){
+    canAdd = true
+   }
+  //dospecial check, eg premium aqua 
+}
+else if( inDeck == null ||(inDeck < 4)){
+  canAdd = true
+}
+ 
+return canAdd
+
+}
+
+async function addCardGDeck(card){
+//come back when g guardians
+let cardName = card.name
+if(canAddGDeck(card)){
+  setGDeck([...gDeck, card])
+  if(gCounts[cardName] !== undefined){
+    gCounts[cardName] += 1
+  }
+  else{gCounts[cardName] = 1}
+  setGCounts({...gCounts})
+  setGDeckCount(prevDeckCount => prevDeckCount + 1)
+}
+
+}
 async function addCardMaindeck(card){//for maindeck if add === false , setmessage and display message in alert
   //check if card can be added => check if in deck, if it is check if the amount ind eck is less equal to than bacnlist an
   //less than banlist amount in deck
-  if(deckCount === 50){return;}
+ 
+  if(deckCount === 50 &&!card.cardtype.includes('G Unit') ){return;}
   let add = true
   let cardName = card.name
 //do can add check 
  
 //do triggercheck
 add = await canAdd(cardName)
+ 
+if(card.cardtype.includes('G Unit')){
+  await addCardGDeck(card);
+
+ return
+}
 if(card.cardtype.includes('Trigger Unit') && add){
   add = await triggerCheck(card);
 
  
 }
+ 
 if(card.text.includes('[CONT]:Sentinel') && add){
   add = await sentinelCheck(card);
 }
  
-
+ 
 if(add){
   //give id then   add
+  if(card.triggereffect){
+    let triggerType = card.triggereffect.split(' ')[0]
  
+  if(deckTriggers[triggerType] < deckProperties.current[triggerType]){
+    deckTriggers[triggerType] ++
+    setDeckTriggers({...deckTriggers})
+    setTriggerCount(prevTriggerCount => prevTriggerCount + 1); 
+  }
+}
   if(counts[cardName] !== undefined){
     counts[cardName] += 1
   }
@@ -316,14 +658,24 @@ if(add){
  
 
 }
+async function removeGDeck(index){
+  let card =  gDeck.splice(index, 1)[0]
+  
+  gCounts[card.name] --;
+  setGDeckCount(prevDeckCount => prevDeckCount - 1); 
+  setGDeck([...gDeck])
+  setGCounts({...gCounts})
 
+}
  
 async function removeMainDeck(section , index){
   let card
+  
 if(section === 'normalUnits'){
   card =  normalUnits.splice(index, 1)[0]
 }
-else if(section === 'triggers'){
+ 
+ if(section === 'triggers'){
   card =  triggers.splice(index, 1)[0]
  
     let triggerType = card.triggereffect.split(' ')[0]
@@ -332,23 +684,112 @@ else if(section === 'triggers'){
 setDeckTriggers({...deckTriggers})
      setTriggerCount(prevTriggerCount => prevTriggerCount - 1); 
 }
-else if(section === 'orders'){
+
+ if(section === 'orders'){
   card =  orders.splice(index, 1)[0]
 }
-else if(section === 'sentinels'){
-  card =  sentinels.splice(index, 1)[0]
+
+if(card.text.includes('[CONT]:Sentinel') ){
   setSentinelCount(prevSentinelCount => prevSentinelCount - 1);;
 }
   counts[card.name] --;
   setDeckCount(prevDeckCount => prevDeckCount - 1); 
-  setMainDeck([...normalUnits , ...triggers , ...orders, ...sentinels])
+  setMainDeck([...normalUnits , ...triggers , ...orders])
   setCounts({...counts})
  
 }
 
 async function addCardRideDeck(card){
+  if(props.format !== 'Standard'){
+    if(card.grade === 0 && !card.cardtype.includes('Order')){
+      let add = false
+      let cardName = card.name
+
+      add = await canAdd(cardName)
+ 
+      if(card.cardtype.includes('Trigger Unit') && add){
+        add = await triggerCheck(card);
+ 
+      }
+      if(card.text.includes('[CONT]:Sentinel') && add){
+        add = await sentinelCheck(card);
+      }
+ 
+      if(add){
+        //give id then   add
+        if(firstVanguard.current !== undefined){
+          counts[firstVanguard.current.name]--;
+          let trigger = 0
+          let sentinel = 0
+          if(card.cardtype.includes('Trigger')){
+ 
+              let triggerType = card.triggereffect.split(' ')[0]
+           
+               deckTriggers[triggerType] ++; 
+            trigger ++;
+               
+          }
+ 
+          if(card.text.includes('[CONT]:Sentinel') ){
+           sentinel ++;
+            
+          }
+
+          if(firstVanguard.current.cardtype.includes('Trigger')){
+ 
+            let triggerType = firstVanguard.current.triggereffect.split(' ')[0]
+         
+             deckTriggers[triggerType] --; 
+            trigger --;
+             
+        }
+
+        if(firstVanguard.current.text.includes('[CONT]:Sentinel') ){  
+ 
+          sentinel --;
+        }
+     setTriggerCount(prevTriggerCount => prevTriggerCount + trigger); 
+   
+        setSentinelCount(sentinelCount + sentinel);;
+        setDeckTriggers({...deckTriggers})
+        }
+        if(counts[cardName] !== undefined){
+          counts[cardName] += 1
+        }
+        else{counts[cardName] = 1}
+        setCounts({...counts})
+
+
+        if(firstVanguard.current === undefined){
+        setDeckCount(prevDeckCount => prevDeckCount + 1); 
+        if(card.cardtype.includes('Trigger')){
+ 
+            let triggerType = card.triggereffect.split(' ')[0]
+         
+             deckTriggers[triggerType] ++; 
+        setDeckTriggers({...deckTriggers})
+             setTriggerCount(prevTriggerCount => prevTriggerCount + 1); 
+        }
+ 
+
+
+        }
+        
+      
+        firstVanguard.current = card;
+        
+        setSleeve({...sleeve});
+        setMainDeck([...mainDeck])
+       
+      }
+ 
+    }
+ 
+   
+    return}
   let key = 'grade'+ card.grade
-  if(rideDeckCounts.current[key ] !== false){timedDisplay('Can only have 1 card of Grade ' + card.grade + ' in Ride Deck');return}
+  if(card.grade >3){timedDisplay('Cannot add grade ' + card.grade + ' to Ride Deck');return}
+  
   let add = true
   let cardName = card.name
 
@@ -367,9 +808,7 @@ if(card.text.includes('[CONT]:Sentinel')&& add){
 
 if(add){
   //give id then   add
-  if(deckProperties.current.gripho === true && card.triggereffect.split(' ')[0] === 'Over'){
-    rideDeckCounts.current['Over'] = card
-  }
+ 
  
   if(counts[cardName] !== undefined){
     counts[cardName] += 1
@@ -380,8 +819,8 @@ if(add){
   setRideDeck([...rideDeck , card]) 
   //setDeckCount(prevDeckCount => prevDeckCount + 1); 
   setCounts({...counts})
-  if(card.grade === 0){firstVanguard = card}
-  else if(card.grade === 3){faceCard = card.img}
+  if(card.grade === 0){firstVanguard.current = card}
+  else if(card.grade === 3){faceCard.current = card.img}
 }
  
 
@@ -390,6 +829,29 @@ if(add){
 }
 
 async function removeCardRideDeck(index){
+  if(props.format !== 'Standard'){
+    if(firstVanguard.current != undefined){
+      let card = firstVanguard.current
+      firstVanguard.current = undefined; 
+ 
+       if(card.cardtype.includes('Trigger')){
+      
+          let triggerType = card.triggereffect.split(' ')[0]
+       
+           deckTriggers[triggerType] --; 
+      setDeckTriggers({...deckTriggers})
+           setTriggerCount(prevTriggerCount => prevTriggerCount - 1); 
+      }
+      if(card.text.includes('[CONT]:Sentinel')){
+        setSentinelCount(prevSentinelCount => prevSentinelCount - 1);;
+      }
+        counts[card.name] --;
+        setDeckCount(prevDeckCount => prevDeckCount - 1); 
+        setMainDeck([...normalUnits , ...triggers , ...orders])
+        setCounts({...counts})
+       
+    }
+    return}
   let card = rideDeck[index]
  
   let key = 'grade'+ card.grade
@@ -401,10 +863,12 @@ let triggerType = card.triggereffect.split(' ')[0]
  
 deckTriggers[triggerType]--;
 setDeckTriggers({...deckTriggers})
-if(card.text.includes('[CONT]:Sentinel')){
-  setSentinelCount(prevSentinelCount => prevSentinelCount - 1);;
-}
+ 
 setTriggerCount(prevTriggerCount => prevTriggerCount - 1); 
+  }
+
+  if(card.text.includes('[CONT]:Sentinel')){
+    setSentinelCount(prevSentinelCount => prevSentinelCount - 1);;
   }
   rideDeckCounts.current[key] = false;
   counts[card.name]--;
@@ -414,36 +878,56 @@ setTriggerCount(prevTriggerCount => prevTriggerCount - 1);
   setCounts({...counts})
 
 }
-async function importDeck(){//DO SPECIAL IMPORT FOR gripho and shit
+async function importDeck(){ 
+  let format = props.editDeck.Format   
+   props.setFormat(props.editDeck.Format)   
+   props.setClan(props.editDeck.Clan)  
+  
+  if(format === '' || format == undefined){format = 'Standard' ; props.setFormat('Standard')} 
+  console.log(props.format)
+if(format === 'Premium'){
+ 
+  firstVanguard.current = props.editDeck.FirstVanguard
+  let tempMain = [...props.editDeck.MainDeck ]
 
-  let tempMain = props.editDeck.MainDeck
-  let tempRide = props.editDeck.RideDeck
-  firstVanguard = props.editDeck.FirstVanguard
-  faceCard = props.editDeck.FaceCard
+  faceCard.current = props.editDeck.FaceCard
   setSleeve(props.editDeck.Sleeves)
   setPlaymat(props.editDeck.Playmat)
   let tempDeckCount = 0
   let tempTriggerCount = 0
-  let tempSleeve = ''
-  let tempPlaymat = ''
-  let nation = props.editDeck.nation //props.setNation(props.editDeck.nation)
+
+  let card = firstVanguard.current
+
+  if(card.cardtype.includes('Trigger Unit') ){
+    let triggerType = card.triggereffect.split(' ')[0]
+    deckTriggers[triggerType] ++;
+    tempTriggerCount++;
+    setDeckTriggers({...deckTriggers})
+  }
+  if(card.text.includes('[CONT]:Sentinel')){
+    setSentinelCount(prevSentinelCount => prevSentinelCount + 1);;
+  }
+  if(counts[card.name] !== undefined){
+    counts[card.name] += 1
+
+  }
+  else{counts[card.name] = 1}
+  tempDeckCount++;
+
+ 
   for(let i = 0;i<tempMain.length;i++){
     let card = tempMain[i]
     let cardName = card.name
     if(card.cardtype.includes('Trigger Unit') ){
       let triggerType = card.triggereffect.split(' ')[0]
       deckTriggers[triggerType] ++;
-
       tempTriggerCount++;
       setDeckTriggers({...deckTriggers})
     }
     if(card.text.includes('[CONT]:Sentinel')){
       setSentinelCount(prevSentinelCount => prevSentinelCount + 1);;
     }
-    
-    
-
-      if(counts[cardName] !== undefined){
+   if(counts[cardName] !== undefined){
         counts[cardName] += 1
  
       }
@@ -451,9 +935,105 @@ async function importDeck(){//DO SPECIAL IMPORT FOR gripho and shit
       tempDeckCount++;
    
     }
-    for(let i = 0;i<tempRide.length;i++){
-      let card = tempRide[i]
+
+    if(props.editDeck.GDeck){
+      let tempG = props.editDeck.GDeck
+      for(let i = 0;i<tempG.length;i++){
+
+        let card = tempG[i]
+        let cardName = card.name
+      
+        if(gCounts[cardName] !== undefined){
+          gCounts[cardName] += 1
+        }
+        else{gCounts[cardName] = 1}
+        setGCounts({...gCounts})
+        setGDeckCount(prevDeckCount => prevDeckCount + 1)
+      }
+      setGDeck([...props.editDeck.GDeck])
+    }
+    setMainDeck(tempMain)
+    setTriggerCount(tempTriggerCount)
+    setDeckCount(tempDeckCount)
+    setDeckName(props.editDeck.Name)
+    
+}
+else if(format === 'V Premium'){
+  firstVanguard.current = props.editDeck.FirstVanguard
+  let tempMain = [...props.editDeck.MainDeck]
+
+  faceCard.current = props.editDeck.FaceCard
+  setSleeve(props.editDeck.Sleeves)
+  setPlaymat(props.editDeck.Playmat)
+  let tempDeckCount = 0
+  let tempTriggerCount = 0
+ 
+
+  let card = firstVanguard.current
+
+  if(card.cardtype.includes('Trigger Unit') ){
+    let triggerType = card.triggereffect.split(' ')[0]
+    deckTriggers[triggerType] ++;
+    tempTriggerCount++;
+    setDeckTriggers({...deckTriggers})
+  }
+  if(card.text.includes('[CONT]:Sentinel')){
+    setSentinelCount(prevSentinelCount => prevSentinelCount + 1);;
+  }
+  if(counts[card.name] !== undefined){
+    counts[card.name] += 1
+
+  }
+  else{counts[card.name] = 1}
+  tempDeckCount++;
+
+
+  for(let i = 0;i<tempMain.length;i++){
+    let card = tempMain[i]
+    let cardName = card.name
+    if(card.cardtype.includes('Trigger Unit') ){
+      let triggerType = card.triggereffect.split(' ')[0]
+      deckTriggers[triggerType] ++;
+      tempTriggerCount++;
+      setDeckTriggers({...deckTriggers})
+    }
+    if(card.text.includes('[CONT]:Sentinel')){
+      setSentinelCount(prevSentinelCount => prevSentinelCount + 1);;
+    }
+   if(counts[cardName] !== undefined){
+        counts[cardName] += 1
+ 
+      }
+      else{counts[cardName] = 1}
+      tempDeckCount++;
+   
+    }
+ 
+    setMainDeck(tempMain)
+    setTriggerCount(tempTriggerCount)
+    setDeckCount(tempDeckCount)
+    setDeckName(props.editDeck.Name)
+    
+}
+  else if(format === 'Standard'){
+
+    let tempMain = props.editDeck.MainDeck
+    let tempRide = props.editDeck.RideDeck
+    firstVanguard.current = props.editDeck.FirstVanguard
+    faceCard.current = props.editDeck.FaceCard
+    setSleeve(props.editDeck.Sleeves)
+    setPlaymat(props.editDeck.Playmat)
+    let tempDeckCount = 0
+    let tempTriggerCount = 0
+    let tempSleeve = ''
+    let tempPlaymat = ''
+    let nation = props.editDeck.nation //props.setNation(props.editDeck.nation)
+    deckType.current = props.editDeck.deckType || 'normal'
+   
+    for(let i = 0;i<tempMain.length;i++){
+      let card = tempMain[i]
       let cardName = card.name
+ 
       if(card.cardtype.includes('Trigger Unit') ){
         let triggerType = card.triggereffect.split(' ')[0]
         deckTriggers[triggerType] ++;
@@ -469,26 +1049,70 @@ async function importDeck(){//DO SPECIAL IMPORT FOR gripho and shit
   
         if(counts[cardName] !== undefined){
           counts[cardName] += 1
-      
+   
         }
         else{counts[cardName] = 1}
-        //tempDeckCount++;
+        tempDeckCount++;
+     
+      }
+      for(let i = 0;i<tempRide.length;i++){
+        let card = tempRide[i]
+        let cardName = card.name
+ 
+        if(card.cardtype.includes('Trigger Unit') ){
+          let triggerType = card.triggereffect.split(' ')[0]
+          deckTriggers[triggerType] ++;
+    
+          tempTriggerCount++;
+          setDeckTriggers({...deckTriggers})
+        }
+        if(card.text.includes('[CONT]:Sentinel')){
+          setSentinelCount(prevSentinelCount => prevSentinelCount + 1);;
+        }
         
-      }
-    setCounts({...counts})
-   rideDeckCounts.current = {
-      grade0:true,
-      grade1:true,
-      grade2:true,
-      grade3:true,
-      
-      }
-  setMainDeck(tempMain)
-  setRideDeck(tempRide)
-  setTriggerCount(tempTriggerCount)
-  setDeckCount(tempDeckCount)
-  setDeckName(props.editDeck.Name)
+        
+    
+          if(counts[cardName] !== undefined){
+            counts[cardName] += 1
+        
+          }
+          else{counts[cardName] = 1}
+          //tempDeckCount++;
+          
+        }
+      setCounts({...counts})
+     rideDeckCounts.current = {
+        grade0:true,
+        grade1:true,
+        grade2:true,
+        grade3:true,
+        
+        }
+        if(props.editDeck.GDeck){
+          let tempG = props.editDeck.GDeck
+          for(let i = 0;i<tempG.length;i++){
+            
+            let card = tempG[i]
+            let cardName = card.name
+ 
+            if(gCounts[cardName] !== undefined){
+              gCounts[cardName] += 1
+            }
+            else{gCounts[cardName] = 1}
+            setGCounts({...gCounts})
+            setGDeckCount(prevDeckCount => prevDeckCount + 1)
+          }
+          setGDeck([...props.editDeck.GDeck])
+        }
+        
+    setMainDeck(tempMain)
+    setRideDeck(tempRide)
+    setTriggerCount(tempTriggerCount)
+    setDeckCount(tempDeckCount)
+    setDeckName(props.editDeck.Name)
+  
 
+  }
   props.setEditDeck(null)//if doesnt work, set to null on save deck
 }
 
@@ -507,10 +1131,12 @@ setLoading(false)
 },[])
 
 useEffect(()=>{
+  const getImages = async ()=>{  }
+  getImages()
   let newCards = filterCards()
  setFilteredCards(newCards)
 },[filter])
-
+ 
 
 {if(loading) {
   return (
@@ -537,14 +1163,20 @@ useEffect(()=>{
     Name:deckName,
     MainDeck: mainDeck,
     RideDeck:rideDeck,
-    FaceCard: faceCard,
-    FirstVanguard: firstVanguard,
+    FaceCard: faceCard.current,
+    FirstVanguard: firstVanguard.current,
     Sleeves:sleeve,
     Playmat:playmat,
-    Nation:nation
+    Nation:nation,
+    deckType: deckType.current,
+    Format : props.format || 'Standard',
+    Clan: firstVanguard.current.clan || ''
   }
 
-  if(!await validateDeck(fullDeck.current)){
+if(gDeck.length > 0){
+  fullDeck.current['GDeck'] = gDeck
+}
+  if(!await validateDeck(fullDeck.current, deckType.current,props.format)){
     timedDisplay('Invalid Deck'); return
   }
    //loop through decknames.
@@ -568,9 +1200,15 @@ useEffect(()=>{
    
  
 })} >Save Deck</button> 
+<div id='deckTypeButtons' >
+
+<button onClick={(()=> {deckType.current = 'normal' } )}> Normal</button>
+      <button onClick={(()=> {  deckType.current = 'gripho'  })}> Gripho</button>
+      <button onClick={(()=> { deckType.current = 'stride' } )}> Stride</button>
+</div>
 </div>
 
-
+ 
 <div id="collectionStuff">
 Name Search: <input id='searchBar' placeholder = {'Name Search'}  onChange={((e)=>{setFilter({...filter , name:e.target.value}) 
 
@@ -583,8 +1221,8 @@ Text Search: <input id='searchBar' placeholder = {'Text Search'}   onChange={((e
 {showMessage && <Message message = {message}  />}
 
 {showConfirm && <Confirm  user={props.user} fullDeck={fullDeck.current} message={message} setShowConfirm={setShowConfirm} backendUrl = {props.backendUrl} confirmMessage={confirmMessage}  
- setCurrentPage={props.setCurrentPage} overwrite ={overwrite} deckName = {deckName} setActiveDeck={props.setActiveDeck} activeDeck={props.activeDeck} />} 
-<div> grade buttons
+ setCurrentPage={props.setCurrentPage} overwrite ={overwrite} deckName = {deckName} setActiveDeck={props.setActiveDeck} activeDeck={props.activeDeck} decks={props.decks} setDecks={props.setDecks}   />} 
+<div>  
   <button onClick={(()=>{
     if(filter.grade === 0) {  
     filter.grade = -1  
@@ -626,9 +1264,53 @@ Text Search: <input id='searchBar' placeholder = {'Text Search'}   onChange={((e
     setFilter({...filter})
 
   })} >Grade 4</button> 
+
 </div>
+<div className='typeButtons'> 
+    <button onClick={(()=>{
+    if(filter.cardtype.includes('Normal Unit')) {  
+    filter.cardtype = ""  
+    }
+    else{filter.cardtype = "Normal Unit" }
+    setFilter({...filter})
+  })} >Normal Unit</button>
 
+  <button onClick={(()=>{
+    if(filter.cardtype.includes('Trigger Unit')) {  
+     filter.cardtype = ""  
+    }
+    else{ filter.cardtype = "Trigger Unit"  }
+    setFilter({...filter})
+  })} >Trigger Unit</button>
+  <button onClick={(()=>{
+    if(filter.cardtype.includes('Normal Order')) {  
+     filter.cardtype = ""  
+    }
+    else{filter.cardtype = "Normal Order" }
+    setFilter({...filter})
 
+  })} >Normal Order</button>
+  <button onClick={(()=>{
+    if(filter.cardtype.includes('Blitz Order')) {  
+     filter.cardtype = ""  
+    }
+    else{filter.cardtype = "Blitz Order" }
+    setFilter({...filter})
+
+  })} >Blitz Order</button> 
+    <button onClick={(()=>{
+    
+    if(filter.cardtype.includes('Set Order')) {  
+     filter.cardtype = ""  
+    }
+    else{filter.cardtype = "Set Order" }
+    setFilter({...filter})
+
+  })} >Set Order</button> 
+   
+   </div>
+
+<button onClick={(()=>{setFilter({grade : -1, text:'' , name:'', cardtype: ''})})}>Reset Filters</button>
 </div>
 
 
@@ -643,6 +1325,9 @@ Text Search: <input id='searchBar' placeholder = {'Text Search'}   onChange={((e
   <div>
     Trigger Count: {triggerCount} /16
   </div>
+  <div>
+    G Deck Count: {gDeckCount} /16
+  </div>
   </div>
    </div>
    </div>
@@ -652,7 +1337,7 @@ Text Search: <input id='searchBar' placeholder = {'Text Search'}   onChange={((e
  
   
   
-   <div className='cardImg'><img id='builderCardImg' className='cardImg'  src = {viewCard.img} /></div>
+   <div className='cardImg'><CustomImage id='builderCardImg' className='cardImg' src = { viewCard.img} /></div>
     <div className='cardName'>{viewCard.name}</div>    
    <div className='cardFlavor'>{viewCard.flavor}</div>
     <div className='cardText'>{viewCard.text}</div>
@@ -668,6 +1353,7 @@ Text Search: <input id='searchBar' placeholder = {'Text Search'}   onChange={((e
 
 {filteredCards
 .map( (card , index)=>{
+ 
   
   return <div className='collectionCard' key = {index} onMouseEnter = {(()=>{setViewCard(card);})} onClick={(()=>{ addCardMaindeck(card) })}  
 onAuxClick = {((e)=>{ 
@@ -678,10 +1364,10 @@ onAuxClick = {((e)=>{
 
 }
 
-onContextMenu={((e)=>{e.preventDefault();addCardRideDeck(card)})}>
+onContextMenu={((e)=>{e.preventDefault();addCardRideDeck(card)})} >
   
   
-  <img src = {card.img} loading={'eager' || 'lazy' } />
+  <CustomImage src = {card.img} alt={card.name} loading={'eager' || 'lazy' }  />
 
    </div>} ) 
   
@@ -690,18 +1376,22 @@ onContextMenu={((e)=>{e.preventDefault();addCardRideDeck(card)})}>
 </div>
 <div id="deck">
 
-      <div className='rideDeck'> 
+{  props.format === 'Standard' ?   <div className='rideDeck'> 
           Ride Deck
           <div className={'cards'} >  
 { rideDeck.map((k, index)=>{
 return <div   key = {index} className ={'rideDeckCard'} 
 onMouseEnter= {((e)=>{setViewCard(k) })} onContextMenu={((e)=>{e.preventDefault(); 
   removeCardRideDeck(index)})} > 
-  <img    className ={'deckCard'} src = { k.img}/></div>
+  <CustomImage  className ={'deckCard'} src = { k.img}/></div>
 })}
 </div>
 
-        </div>
+        </div>  : <div className={'cards deckCard'} >
+          FV
+          <div onMouseEnter= {((e)=>{setViewCard(firstVanguard.current) })} onContextMenu={((e)=>{e.preventDefault(); 
+  removeCardRideDeck(0)})}  >{firstVanguard.current !== undefined ? <CustomImage   src= {firstVanguard.current.img} /> : <></>}</div>
+          </div>}
       <div id= {'mainDeck'}> Main Deck
 
       <h4>Normal Units</h4>
@@ -709,9 +1399,9 @@ onMouseEnter= {((e)=>{setViewCard(k) })} onContextMenu={((e)=>{e.preventDefault(
 <div className={'cards'} >  
 {normalUnits.map((k, index)=>{
 return <div key = {index} className ={'deckCard'}  
-onMouseEnter= {((e)=>{ setViewCard(k)})} onContextMenu={((e)=>{e.preventDefault(); })}
-onClick={((e)=>{e.preventDefault();removeMainDeck( 'normalUnits', index )})}> 
-<img className ={'deckCard'} src = { k.img}/></div>
+onMouseEnter= {((e)=>{ setViewCard(k)})} onClick={((e)=>{e.preventDefault(); let card = normalUnits[index] ; addCardMaindeck(card) })}
+onContextMenu={((e)=>{e.preventDefault();removeMainDeck( 'normalUnits', index )})}> 
+<CustomImage  className ={'deckCard'} src = {  k.img}/></div>
 })} 
 </div>   
 </div>
@@ -719,9 +1409,9 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'normalUnits', index )})}>
 <div id={'triggerunits'} className='deckSection' >   
 <div className='cards'> 
 {triggers.map((k, index)=>{ return <div key = {index} className ={'deckCard'} 
-onMouseEnter= {((e)=>{ setViewCard(k)})} onContextMenu={((e)=>{e.preventDefault(); })}
-onClick={((e)=>{e.preventDefault();removeMainDeck( 'triggers', index )})}> 
-  <img className ={'deckCard'} src = { k.img}/></div>
+onMouseEnter= {((e)=>{ setViewCard(k)})} onClick={((e)=>{e.preventDefault(); let card = triggers[index] ; addCardMaindeck(card)})} 
+onContextMenu={((e)=>{e.preventDefault();removeMainDeck( 'triggers', index )})}> 
+  <CustomImage  className ={'deckCard'} src = {k.img}/></div>
 })} 
 </div> 
 </div>  
@@ -729,24 +1419,26 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'triggers', index )})}>
 <div id={'orders'} className='deckSection' >    
 <div className='cards'> 
 {orders.map((k, index)=>{ return <div key = {index} className ={'deckCard'}  
-onMouseEnter= {((e)=>{ setViewCard(k)})} onContextMenu={((e)=>{e.preventDefault(); })}
-onClick={((e)=>{e.preventDefault();removeMainDeck( 'orders', index )})}> 
-<img className ={'deckCard'} src = { k.img}/></div>
+onMouseEnter= {((e)=>{ setViewCard(k)})} onClick={((e)=>{e.preventDefault();let card = orders[index] ; addCardMaindeck(card) })}
+onContextMenu={((e)=>{e.preventDefault();removeMainDeck( 'orders', index )})}> 
+<CustomImage className ={'deckCard'} src = { k.img}/></div>
 })} 
 </div>  
 </div>
-<h4>Sentinels</h4>
-<div id={'sentinels'} className='deckSection'  >    
-<div className='cards' > 
- {sentinels.map((k, index)=>{return <div key = {index} className ={'deckCard'}  
-onMouseEnter= {((e)=>{ setViewCard(k)})} onContextMenu={((e)=>{e.preventDefault(); })}
-onClick={((e)=>{e.preventDefault();removeMainDeck( 'sentinels', index )})}> 
- <img className ={'deckCard'} src = { k.img}/></div>
-})} 
-</div>      
-</div> 
+ 
       </div>
+      <div className='gDeck'> 
+          G Deck
+          <div className={'cards'} >  
+{ gDeck.map((k, index)=>{
+return <div   key = {index} className ={'gDeckCard'} onClick={((e)=>{e.preventDefault(); let card = gDeck[index] ; addCardGDeck(card)})}
+onMouseEnter= {((e)=>{setViewCard(k) })} onContextMenu={((e)=>{e.preventDefault(); 
+  removeGDeck(index)})} > 
+  <CustomImage   className ={'deckCard'} src = { k.img}/></div>
+})}
+</div>
 
+        </div>
 </div>
 
     </div>
@@ -761,7 +1453,7 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'sentinels', index )})}>
   }
   e.target.disabled = true
   sleeveButton.current = e.target
-  deckType.current = 'RideDeck'
+  sleeveType.current = 'RideDeck'
   setSleeve({...sleeve})
 })} >Ride Deck Sleeves</button>
 <button onClick={((e)=>{
@@ -770,7 +1462,7 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'sentinels', index )})}>
   }
   e.target.disabled = true
   sleeveButton.current = e.target
-    deckType.current = 'MainDeck'
+  sleeveType.current = 'MainDeck'
     setSleeve({...sleeve})
 })} >Main Deck Sleeves</button>
 <button onClick={((e)=>{
@@ -779,7 +1471,7 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'sentinels', index )})}>
   }
   e.target.disabled = true
   sleeveButton.current = e.target
-    deckType.current = 'GDeck'
+  sleeveType.current = 'GDeck'
     setSleeve({...sleeve})
 })} >G Deck Sleeves</button>
 
@@ -788,7 +1480,7 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'sentinels', index )})}>
   {sleeves.map((sleev , index)=>{
               let selected = false ;
 
-              if(sleeve[deckType.current]  === sleev.img){
+              if(sleeve[sleeveType.current]  === sleev.img){
                 //highlight deck
                 selected = true
               }
@@ -796,11 +1488,11 @@ onClick={((e)=>{e.preventDefault();removeMainDeck( 'sentinels', index )})}>
   
   return <div  key={index} className={`sleeve  ` +  (selected && 'selectedPlaymat') }   onClick={(()=>{
  
-sleeve[deckType.current] = sleev.img
+sleeve[sleeveType.current] = sleev.img
  
 setSleeve({...sleeve})
 })}  > 
-<img src = {sleev.img}/>
+<CustomImage src = { sleev.img}/>
 
 </div>})}
 </div>
@@ -824,7 +1516,7 @@ setSleeve({...sleeve})
     return <div key={index} className={`playmat  ` +  (selected && 'selectedPlaymat') }       onClick={(()=>{setPlaymat(mat.img);
  
     })}  >
-<img src = {mat.img}/>
+<CustomImage src = {mat.img} />
 
 </div>})}
 </div>

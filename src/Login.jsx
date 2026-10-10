@@ -1,24 +1,41 @@
-import React , {useEffect, useState} from 'react'
+import React , {useContext, useEffect, useState} from 'react'
 import axios from 'axios'
 import {v4 as uuidv4} from 'uuid'
-import {Peer} from 'peerjs'
+ 
 import { io } from 'socket.io-client'
 import './Login.css'
-export default function Login(props) {
+import { socket } from './socket.js'
+import { dataContext } from './App'
+import { BrowserRouter , Navigate} from 'react-router-dom'
+export default function Login() {
 //send current activedeck to server on logout and get it back when log in
+const props = useContext(dataContext)
+
   const [username , setUsername] = useState('');
   const [password , setPassword] = useState('');
   const [waitingForServer , setWaitingForServer] = useState(false)
+
+//might be possilbe to save field game state using localstorage
+
 useEffect(()=>{
-if(props.loggedIn){
+    const loggedInUser = localStorage.getItem("vansimUser");
  
-  props.setCurrentPage('home')
-}
+    if (loggedInUser) {
+      const foundUser = JSON.parse(loggedInUser);
+socket.connect()
 
-}, [props.loggedIn])
-useEffect(()=>{
+      let tempUser = {displayname: foundUser.displayname , username:foundUser.username
+        // profilepic: res.data.userData.profilepic
+       }
+       props.setUser(tempUser);props.setActiveDeck(foundUser.activeDeck)
+       
+     props.setLoggedIn(foundUser); 
+    }
 
-  document.getElementById("loginMain").addEventListener("keypress", function(event) {
+ 
+ 
+ 
+     document.getElementById("loginMain").addEventListener("keypress", function(event) {
     // If the user presses the "Enter" key on the keyboard
 
     if (event.key === "Enter") {
@@ -35,7 +52,7 @@ useEffect(()=>{
     <div id='loginMain'  className='info'>
       Login  
       <div  id='loginInput'>
-        {
+        {props.loggedIn? <Navigate to='/home'/> : <></>
           //send message to server to keep track of active users
         }
       Username : <input id ={'username'} type={'email'} required={true}  onChange={(e)=>setUsername(e.target.value)} />
@@ -45,7 +62,7 @@ useEffect(()=>{
         <button type={'button'} id = {'loginSubmit'} onClick={(async()=>{ //disable button onclick to prevent multiplw xlixks
          if(waitingForServer){alert('Waiting for server');return}
          else{
-
+          console.log(props.loggedIn)
    
          try{
           setWaitingForServer(true)
@@ -53,11 +70,17 @@ useEffect(()=>{
           await axios.post(  props.backendUrl + 'login' , {username : username , password:password}).then(
             async (res)=>{
            
-            props.setSocket(await io.connect(props.backendUrl))
+            socket.connect()
             props.setLoggedIn(res.data.user); 
+            
+            localStorage.setItem('vansimUser', JSON.stringify(res.data.userData))
+            
             let tempUser = {displayname: res.data.userData.displayname , username:res.data.userData.username
              // profilepic: res.data.userData.profilepic
             }
+            
+            console.log(res.data )
+            props.setDecks(res.data.decks)
             props.setUser(tempUser);props.setActiveDeck(res.data.userData.activeDeck)
             
                       }  
@@ -76,7 +99,7 @@ setWaitingForServer(false)
             // if(props.loggedIn === false){alert('Login Failed')}
           }
         )
-        }  >Submit</button>
+        }  >  Submit</button>
      
 
      

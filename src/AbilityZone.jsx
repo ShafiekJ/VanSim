@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react'
 import './AbilityZone.css'
-
+import CustomImage from './CustomImage'
 
 
 export default function AbilityZone(props) {
@@ -29,8 +29,16 @@ export default function AbilityZone(props) {
   
       <div id = {'abilityZone'}  >
         {props.abilityZone.length === 0? <>No targets found, click confirm</> : <></>} 
-        {props.abilityZone.map( (card , i)=>{ return  <div key = {i} className = {'zone card'}
-         onMouseEnter={(()=>{props.setViewCard(card)})}><img src={card.img} />  <div></div> {card.place}</div> } )}
+        {props.abilityZone.map( (card , i)=>{ 
+          // if(card.faceup)
+          return  <div key = {i} className = {'zone card'}
+         onMouseEnter={(()=>{props.setViewCard(card)})}>  <CustomImage src={card.img} />  <div> </div> {card.place} {card.faceup? 'faceup': 'facedown'}  </div> 
+        //  else{
+        //   return  <div key = {i} className = {'zone card'}
+        //   onMouseEnter={(()=>{props.setViewCard(card)})}> <div> </div> <CustomImage src={card.back} />  <div></div> {card.place}  {card.faceup? 'faceup': 'facedown'} </div> 
+        //  }
+         
+         } )}
          
          </div>
       )

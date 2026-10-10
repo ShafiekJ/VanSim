@@ -163,6 +163,11 @@ align-items: center;
     align-items: center;
 
 }
+.order-area{
+position:fixed;
+z-index: 3;
+ 
+}
 .zoneCards .card:hover{
     border:0.3rem solid gold;
     border-radius: 0.5rem;

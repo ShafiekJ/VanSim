@@ -4,11 +4,11 @@ import './Message.css'
 export default function Message(props) {
   return (
     <div  id='messageHolder'  style  = {{
-      "height":"200px",
-      "width": "500px",
-      "backgroundColor": "black",
+      "height":"100px",
+      "width": "200px",
+ 
       "position":"absolute",
-      'zIndex':10,
+     
       'display':"flex",
       'flexDirection':"row",
       "justifyContent":"center",

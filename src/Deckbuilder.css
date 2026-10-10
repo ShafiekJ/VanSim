@@ -145,13 +145,17 @@
 
 .confirm{
   display: flex;
+ 
   justify-content: center;
   align-items: center;
- position: absolute;
+  position: fixed;
+  top:50vh;
   z-index: 10;
   background-color: black;
   width: 30vw;
   height:30vh;
+  border-radius: 2rem;
+  background-color: rgba(185, 136, 210, 0.396);
 }
 
 /* DeckManager*/

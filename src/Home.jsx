@@ -1,79 +1,104 @@
-import React ,{useEffect} from 'react'
+import React ,{useEffect, useContext} from 'react'
 import axios from 'axios';
-
+import { dataContext } from './App.jsx';
 import {Adsense} from '@ctrl/react-adsense';
 import Ad from './Ad';
+import CustomImage from './CustomImage'
+import LinkButton from './LinkButton.jsx';
+import { socket } from './socket';
 import './Home.css'
-export default function Home(props) {
-  let user = props.user
-  let activeDeck = props.activeDeck
+import { useNavigate } from 'react-router-dom';
 
+
+
+
+export default function Home(props) {
+  const navigate = useNavigate()
+  const data = useContext(dataContext);
+  console.log(data)
+  let user = data.user
+  let activeDeck = data.activeDeck
+  const formats = ['Standard' , 'V Premium' , 'Premium']
 
   useEffect(()=>{
-  if(props.socket)
-    props.socket.on('Recieved' , (data)=>{
-      props.setOnlineUsers(data.onlineUsers)
+ 
+     socket.on('Recieved' , (dta)=>{
+ 
+      data.setOnlineUsers(dta.onlineUsers)
+  
+      //  
     })
   
   
   }, [])
-
-  useEffect(()=>{
-    //import cards in app and pass as props
-    
-    }, [])
+ 
 
   return (
+    
     <div id = {'home-container'}>
+    {console.log(data.user , dataContext)}
       <div id='bannerHolder'>
       <div id='banner' >Bleh</div>
       <div id={'leftside'}>
  
+<LinkButton className='homeButton' to='/login' text='Log Out' onClick={(()=>{
+    localStorage.removeItem('vansimUser')
+     socket.disconnect();
+  data.setLoggedIn(false);
+  
+  } )}  ></LinkButton>
 
-   <a href='https://discord.gg/dhywT9me' target="_blank"className='homeButton'> <button onClick={(()=>{ 
+    <LinkButton className='homeButton' text='Discord'  onClick={(()=>{ 
+          document.getElementById('discordLink').click()
+    })} ><a href='https://discord.gg/SdARYHjvXP' id='discordLink' target="_blank"></a>
       
-    })} >
-      Discord
-    </button></a>
+    </LinkButton>
  
-  <a href='https://ko-fi.com/vansim' target="_blank"className='homeButton' id= 'donate'>
-        <button   onClick={(()=>{
-    
+ 
+        <LinkButton  className='homeButton' text='Donate' onClick={(()=>{
+   // document.getElementById('donateLink').click()
+ 
         })}>
-        Donate
+        
       
+        <a href='https://ko-fi.com/vansim' target="_blank" id= 'donateLink'>
+        </a>
+        </LinkButton> 
+        
+ <LinkButton className='homeButton' to='/deckManager' text = 'Change Deck' ></LinkButton>
+
+
+<LinkButton className='homeButton' to='/friendfight' text='Friend Fight' onClick={(()=>{})}>
+      
+      </LinkButton>
+
+        <a><button className='homeButton'  onClick={(async()=>{
           
-
-        </button> 
-         </a>
- <button className='homeButton' onClick={(()=>{props.setCurrentPage('deckmanager');
-            axios.post(props.backendUrl + 'decks' , {user: props.user})
-            .then(response =>  
-            props.setDecks(response.data) ) 
- 
- 
-
-      } ) }>Change Deck</button>
-
-
-<button className='homeButton' onClick={(()=>{props.setCurrentPage('friendfight')})}>
-      Friend Fight
-      </button>
-
-        <button className='homeButton' onClick={(()=>{
-   
+          //check if deck format matches selected format
+          
+          if(data.format === activeDeck.Format ){
+             
+            navigate('/randomfight')
+          }
+          else if(data.format === 'Standard' && activeDeck.Format == undefined){
+            navigate('/randomfight')
+          }
+          else{
+            alert('Wrong Deck For This Format')
+          }
+             })}
           
           
-          props.setCurrentPage('randomfight')})}>Random Fight</button>
+          >Random Fight</button></a>
 
 
       </div>
       </div>
        <div id={'rightside'}>
-  Users Online : {props.onlineUsers}
+  Users Online : {data.onlineUsers}
 <div id="userInfo">
-  <div>
-
+  <div id='formatHolder' >
+          {formats.map((format)=>  <button key={format} className={( 'format') } onClick={(()=>{data.setFormat(format)})} >{format}  </button>)}
   </div>
   {user.displayname}
  
@@ -81,10 +106,10 @@ export default function Home(props) {
 <div id='deckInfo'>
   Active Deck
   <div>
-    <img src= {props.activeDeck.FaceCard} className='faceCard'></img>
+    <CustomImage src= {data.activeDeck.FaceCard} className='faceCard'/> 
   </div>
 <div>
-  {props.activeDeck.Name}
+  {data.activeDeck.Name}
 </div>
 
  <div className='horizontal-ad' > 

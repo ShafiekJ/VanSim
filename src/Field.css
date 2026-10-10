@@ -147,9 +147,11 @@
     z-index: 20;
     position: absolute;
     max-width: 20vw;
+    border-radius:10px;
+    background-color: rgba(18, 17, 17, 0.965);
 }
 body{
-    color: rgb(255, 253, 253);
+    color: rgba(141, 134, 144, 0.512);
     font-weight: 100;
     text-shadow: -1px -1px 0 #8f8787, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     font-family: "Anta", sans-serif;
@@ -215,7 +217,7 @@ body{
 
     top: 30%;
     flex-direction: row;
- 
+    line-height: 1.5;
     align-items: center;
     border-radius: 0.5rem;
 }

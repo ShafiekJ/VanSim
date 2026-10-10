@@ -1,6 +1,7 @@
 
 
 
+//trash this or make it work like this
 var abilities = {  
       "Tranquil Affection, Elivira":{
     "ability1":{
